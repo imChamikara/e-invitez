@@ -1,0 +1,52 @@
+{
+  "nav": { "templates": "Designs", "features": "Features", "pricing": "Pricing", "faq": "FAQ", "login": "Sign in", "start": "Get started" },
+  "hero": {
+    "title": "Beautiful invitations for every Sri Lankan celebration",
+    "subtitle": "Create a lovely event page for your wedding, homecoming, big girl party, birthday or dana – and share it on WhatsApp in minutes. In සිංහල, தமிழ் and English.",
+    "cta": "Create your invitation",
+    "demo": "See live examples"
+  },
+  "how": {
+    "title": "How it works",
+    "steps": [
+      { "t": "Fill in the details", "d": "Add the names, date, venue, nekath times and photos. It takes about five minutes." },
+      { "t": "Pick a design", "d": "Choose a template that suits your occasion and see it come to life as you type." },
+      { "t": "Share on WhatsApp", "d": "Get your own link like /e/nimal-weds-sachini and send personal invitations to every family." }
+    ]
+  },
+  "templates": { "title": "Designs for every occasion", "subtitle": "Tap any design to see a live example.", "view": "View example" },
+  "features": {
+    "title": "Everything your family needs",
+    "items": [
+      { "t": "Three languages", "d": "Guests can read your invitation in Sinhala, Tamil or English with one tap." },
+      { "t": "Light and fast", "d": "Built for slow data and older phones. Large, easy-to-read text for elders." },
+      { "t": "Personal guest links", "d": "Greet each family by name and know how many are coming." },
+      { "t": "RSVP and wishes", "d": "See who is attending, meal choices and total headcount. Read heartfelt wishes." },
+      { "t": "Nekath timeline", "d": "Show every ceremony with its auspicious time and a live countdown." },
+      { "t": "Maps and WhatsApp", "d": "One-tap directions in Google Maps and a preview card that looks great in WhatsApp." }
+    ]
+  },
+  "pricing": {
+    "title": "Simple pricing",
+    "subtitle": "Placeholder prices – payments are coming soon. Everything is free while we launch.",
+    "per": "per event",
+    "free": "Free",
+    "start": "Start free",
+    "plans": {
+      "free": { "name": "Free", "features": ["1 event page", "Up to 6 photos", "Up to 30 guests", "All templates", "\"Made with\" footer"] },
+      "standard": { "name": "Standard", "features": ["Up to 20 photos", "Up to 200 guests", "Custom colours", "Password protection", "CSV export", "No footer"] },
+      "premium": { "name": "Premium", "features": ["Up to 60 photos", "Up to 1000 guests", "Everything in Standard", "Priority support"] }
+    }
+  },
+  "faq": {
+    "title": "Questions",
+    "items": [
+      { "q": "Do my guests need an account?", "a": "No. Guests just open your link, read the invitation and reply. Nothing to install." },
+      { "q": "Will it work on slow internet?", "a": "Yes. Pages are small, photos are compressed and fonts load only for the language in use." },
+      { "q": "Can I write in Sinhala and Tamil?", "a": "Yes. Write your text in any language and optionally add translations. Guests choose their language." },
+      { "q": "Can I make the page private?", "a": "Yes. Hide it from search engines, or protect it with a password on paid plans." },
+      { "q": "How do I send personal invitations?", "a": "Add your guest list, then tap Send on WhatsApp next to each name. Each person gets a link that greets them." }
+    ]
+  },
+  "footer": { "tagline": "Invitations made with love for Sri Lankan families.", "rights": "All rights reserved." }
+}

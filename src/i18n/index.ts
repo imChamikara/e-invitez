@@ -6,6 +6,9 @@ import taCommon from "./messages/ta/common.json";
 import enDash from "./messages/en/dash.json";
 import siDash from "./messages/si/dash.json";
 import taDash from "./messages/ta/dash.json";
+import enLanding from "./messages/en/landing.json";
+import siLanding from "./messages/si/landing.json";
+import taLanding from "./messages/ta/landing.json";
 import enEvent from "./messages/en/event.json";
 import siEvent from "./messages/si/event.json";
 import taEvent from "./messages/ta/event.json";
@@ -14,15 +17,15 @@ import taEvent from "./messages/ta/event.json";
  * To add a language: create messages/<code>/*.json, register it below and add it to
  * `siteConfig.languages`. Missing keys fall back to English automatically.
  */
-const en = { common: enCommon, event: enEvent, dash: enDash };
+const en = { common: enCommon, event: enEvent, dash: enDash, landing: enLanding };
 export type Dict = typeof en;
 
 type DeepPartial<T> = { [K in keyof T]?: DeepPartial<T[K]> };
 
 const bundles: Record<Lang, DeepPartial<Dict>> = {
   en,
-  si: { common: siCommon, event: siEvent, dash: siDash },
-  ta: { common: taCommon, event: taEvent, dash: taDash },
+  si: { common: siCommon, event: siEvent, dash: siDash, landing: siLanding },
+  ta: { common: taCommon, event: taEvent, dash: taDash, landing: taLanding },
 };
 
 function merge<T>(base: T, over: DeepPartial<T> | undefined): T {
@@ -30,7 +33,8 @@ function merge<T>(base: T, over: DeepPartial<T> | undefined): T {
   const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };
   for (const [k, v] of Object.entries(over)) {
     const b = (base as Record<string, unknown>)[k];
-    out[k] = v && typeof v === "object" && typeof b === "object" ? merge(b, v as never) : (v ?? b);
+    out[k] =
+      v && typeof v === "object" && !Array.isArray(v) && typeof b === "object" ? merge(b, v as never) : (v ?? b);
   }
   return out as T;
 }
