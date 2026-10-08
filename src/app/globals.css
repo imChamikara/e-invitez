@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+/* Brand tokens are injected from src/config/site.ts by the root layout. */
+:root {
+  --brand: #9a3412;
+  --brand-dark: #7c2d12;
+  --brand-soft: #fff1e6;
+  --ink: #1c1917;
+  --paper: #fffaf5;
+
+  /* Event theme tokens – each template overrides these on its wrapper. */
+  --accent: #9a3412;
+  --bg: #fffaf5;
+  --fg: #1c1917;
+  --card: #ffffff;
+  --muted: #57534e;
+  --line: #e7e5e4;
+  --on-accent: #ffffff;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-soft: var(--brand-soft);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-accent: var(--accent);
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-on-accent: var(--on-accent);
+  --font-heading: var(--font-heading-stack);
+  --font-body: var(--font-body-stack);
+}
+
+/* Font pairs. Latin → Sinhala → Tamil fallbacks so mixed text never breaks. */
+.fp-sans {
+  --font-heading-stack: var(--font-inter), var(--font-sans-si), var(--font-sans-ta), system-ui, sans-serif;
+  --font-body-stack: var(--font-inter), var(--font-sans-si), var(--font-sans-ta), system-ui, sans-serif;
+}
+.fp-serif {
+  --font-heading-stack: var(--font-playfair), var(--font-serif-si), var(--font-serif-ta), Georgia, serif;
+  --font-body-stack: Georgia, var(--font-serif-si), var(--font-serif-ta), serif;
+}
+.fp-display {
+  --font-heading-stack: var(--font-playfair), var(--font-serif-si), var(--font-serif-ta), Georgia, serif;
+  --font-body-stack: var(--font-inter), var(--font-sans-si), var(--font-sans-ta), system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-inter), var(--font-sans-si), var(--font-sans-ta), system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+/* Sinhala/Tamil glyphs are tall – give them air and let long words wrap. */
+:lang(si), :lang(ta) {
+  line-height: 1.85;
+}
+.event-root {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 1.125rem; /* 18px base for older readers */
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.event-root h1,
+.event-root h2,
+.event-root h3,
+.heading-font {
+  font-family: var(--font-heading);
+  overflow-wrap: anywhere;
+}
+
+/* Visible focus for keyboard users everywhere. */
+:focus-visible {
+  outline: 3px solid var(--accent, var(--brand));
+  outline-offset: 2px;
+}
+
+/* Minimum 44px tap targets for interactive controls. */
+.tap {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Gentle entrance animation, disabled for reduced-motion users. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.7s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

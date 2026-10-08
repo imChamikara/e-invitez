@@ -1,0 +1,48 @@
+{
+  "language": "Language",
+  "madeWith": "Made with {brand}",
+  "createYours": "Create your own invitation",
+  "loading": "Loading…",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "back": "Back",
+  "next": "Next",
+  "skipToContent": "Skip to content",
+  "occasions": {
+    "wedding": "Wedding",
+    "homecoming": "Homecoming",
+    "engagement": "Engagement",
+    "big_girl": "Big Girl Party",
+    "birthday": "Birthday",
+    "baby_shower": "Baby Shower",
+    "house_warming": "House Warming",
+    "dana": "Dana / Almsgiving"
+  },
+  "templates": {
+    "classic-wedding": { "name": "Classic Wedding", "desc": "Elegant gold and ivory with serif lettering." },
+    "modern-wedding": { "name": "Modern Wedding", "desc": "Minimal, airy and clean." },
+    "homecoming": { "name": "Homecoming & Engagement", "desc": "Warm rose and green with a festive feel." },
+    "big-girl": { "name": "Big Girl Party", "desc": "Soft florals and warm colours, family-friendly." },
+    "birthday": { "name": "Birthday", "desc": "Playful and colourful for kids and adults." },
+    "dana": { "name": "Dana / Almsgiving", "desc": "Calm, dignified and simple." }
+  },
+  "fontPairs": { "serif": "Classic serif", "sans": "Clean sans-serif", "display": "Elegant display" },
+  "demo": {
+    "title": "Template gallery",
+    "subtitle": "Every template below is fully working with sample data. Tap one to preview it.",
+    "banner": "Demo preview – sample data only",
+    "preview": "Preview",
+    "backToGallery": "All templates",
+    "notFound": "That template does not exist."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "We could not find what you were looking for.",
+    "home": "Go to home page"
+  },
+  "setupNeeded": {
+    "title": "Database not connected yet",
+    "text": "Add your Supabase keys to .env.local to enable real events. You can still explore the demo."
+  }
+}
