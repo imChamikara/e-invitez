@@ -70,14 +70,14 @@ export function EventShell({
   } as CSSProperties;
 
   return (
-    <div lang={lang} className={`event-root fp-${theme.fontPair} min-h-dvh`} style={vars}>
+    <div lang={lang} className={`event-root relative fp-${theme.fontPair} min-h-dvh`} style={vars}>
       {!event.isPublished && (
         <p className="bg-ink px-4 py-2 text-center text-sm font-semibold text-white" role="status">
           {dict.event.previewBanner}
         </p>
       )}
       <div className="absolute right-3 top-3 z-20 text-sm">
-        <LanguageSwitcher current={lang} label={dict.common.language} className="bg-black/40 text-white backdrop-blur-sm" />
+        <LanguageSwitcher current={lang} label={dict.common.language} className="bg-black/65 text-white" />
       </div>
       <main id="main">{children}</main>
       <BrandFooter dict={dict} show={showBranding} />

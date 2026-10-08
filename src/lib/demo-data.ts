@@ -68,7 +68,7 @@ const wedding: EventData = {
   story:
     "We met at university and have been inseparable ever since. With the blessings of our families, we joyfully invite you to celebrate the beginning of our life together.",
   coverImageUrl: art(36, 24),
-  theme: { accent: "#b8892f", fontPair: "serif" },
+  theme: { accent: "#8a6410", fontPair: "serif" },
   photos: photos(36, 24),
   sections: [
     section(1, "Poruwa Ceremony", "2027-02-14T03:30:00Z", "Traditional Poruwa rituals", ["පෝරුව චාරිත්‍ර", "සාම්ප්‍රදායික පෝරුව චාරිත්‍ර"], ["போருவ சடங்கு", "பாரம்பரிய போருவ சடங்குகள்"]),
@@ -151,7 +151,7 @@ const bigGirl: EventData = {
   mapsUrl: "https://maps.google.com/?q=Colombo+07",
   story: "Our dear Senuri is blossoming into a young lady. Join our family for a day of blessings, good food and happy memories.",
   coverImageUrl: art(300, 340),
-  theme: { accent: "#c2410c", fontPair: "display" },
+  theme: { accent: "#b4380f", fontPair: "display" },
   photos: photos(300, 340),
   sections: [
     section(1, "Auspicious Time (Nekath)", "2027-05-08T04:00:00Z", "Ceremonial bathing and blessings", ["නැකත", "චාරිත්‍රානුකූල නෑම සහ ආශීර්වාද"], ["நல்ல நேரம்", "சடங்கு நீராட்டும் ஆசிகளும்"]),
@@ -176,7 +176,7 @@ const birthday: EventData = {
   mapsUrl: "https://maps.google.com/?q=Colombo+04",
   story: "Games, cake and lots of fun! Come and celebrate Amaya's 5th birthday with us.",
   coverImageUrl: art(48, 330),
-  theme: { accent: "#7c3aed", fontPair: "display" },
+  theme: { accent: "#6d28d9", fontPair: "display" },
   photos: photos(48, 330),
   sections: [
     section(1, "Games & Fun", "2027-01-23T09:00:00Z", "", ["ක්‍රීඩා සහ විනෝදය", ""], ["விளையாட்டுகள்", ""]),
@@ -201,7 +201,7 @@ const dana: EventData = {
   mapsUrl: "https://maps.google.com/?q=Gampaha",
   story: "May the merit of this offering reach our beloved father. Your presence and blessings are warmly invited.",
   coverImageUrl: null,
-  theme: { accent: "#a16207", fontPair: "serif" },
+  theme: { accent: "#8a5a00", fontPair: "serif" },
   photos: [],
   sections: [
     section(1, "Pirith Chanting", "2027-06-05T02:30:00Z", "", ["පිරිත් සජ්ඣායනය", ""], ["பிரித் ஓதுதல்", ""]),

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { getI18n } from "@/i18n/server";
 import { DEMO_EVENTS } from "@/lib/demo-data";
 import { localizeEvent } from "@/lib/event-utils";
@@ -28,8 +27,7 @@ export default async function DemoTemplate({ params }: PageProps<"/demo/[templat
         <Link href="/demo" className="tap inline-flex items-center underline">
           ← {dict.common.demo.backToGallery}
         </Link>
-        <span className="hidden sm:inline">{dict.common.demo.banner}</span>
-        <LanguageSwitcher current={lang} label={dict.common.language} className="text-white" />
+        <span>{dict.common.demo.banner}</span>
       </div>
       <Component event={event} lang={lang} dict={dict} guest={null} demo showBranding />
     </>
