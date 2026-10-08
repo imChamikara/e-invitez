@@ -20,7 +20,7 @@ Open http://localhost:3000 and http://localhost:3000/demo – every template ren
 1. Create a project at https://supabase.com (free tier).
 2. In **SQL Editor**, run [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) (tables, RLS policies, helper functions, storage bucket `event-photos`).
 3. Copy `.env.example` to `.env.local` and fill in:
-   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API)
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or legacy `..._ANON_KEY`) (Project Settings → API)
    - `NEXT_PUBLIC_SITE_URL` (e.g. `http://localhost:3000`)
    - `EVENT_COOKIE_SECRET` (any long random string; required in production)
 4. **Authentication → URL Configuration**: set Site URL to your `NEXT_PUBLIC_SITE_URL` and add `<site>/auth/callback` to Redirect URLs. Email magic links work out of the box. For Google sign-in, enable the Google provider and set `NEXT_PUBLIC_GOOGLE_AUTH=true`.

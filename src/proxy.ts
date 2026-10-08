@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { hasSupabase } from "@/lib/supabase/env";
+import { hasSupabase, supabaseEnv } from "@/lib/supabase/env";
 
 /**
  * Refreshes the Supabase auth session cookie. Runs only on owner routes so
@@ -10,9 +10,10 @@ export async function proxy(request: NextRequest) {
   if (!hasSupabase()) return NextResponse.next();
 
   let response = NextResponse.next({ request });
+  const { url, anonKey } = supabaseEnv();
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
