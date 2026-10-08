@@ -3,6 +3,9 @@ import { isLang, siteConfig, type Lang } from "@/config/site";
 import enCommon from "./messages/en/common.json";
 import siCommon from "./messages/si/common.json";
 import taCommon from "./messages/ta/common.json";
+import enDash from "./messages/en/dash.json";
+import siDash from "./messages/si/dash.json";
+import taDash from "./messages/ta/dash.json";
 import enEvent from "./messages/en/event.json";
 import siEvent from "./messages/si/event.json";
 import taEvent from "./messages/ta/event.json";
@@ -11,15 +14,15 @@ import taEvent from "./messages/ta/event.json";
  * To add a language: create messages/<code>/*.json, register it below and add it to
  * `siteConfig.languages`. Missing keys fall back to English automatically.
  */
-const en = { common: enCommon, event: enEvent };
+const en = { common: enCommon, event: enEvent, dash: enDash };
 export type Dict = typeof en;
 
 type DeepPartial<T> = { [K in keyof T]?: DeepPartial<T[K]> };
 
 const bundles: Record<Lang, DeepPartial<Dict>> = {
   en,
-  si: { common: siCommon, event: siEvent },
-  ta: { common: taCommon, event: taEvent },
+  si: { common: siCommon, event: siEvent, dash: siDash },
+  ta: { common: taCommon, event: taEvent, dash: taDash },
 };
 
 function merge<T>(base: T, over: DeepPartial<T> | undefined): T {
