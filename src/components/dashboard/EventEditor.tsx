@@ -138,7 +138,7 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
   const Preview = getTemplate(v.templateKey).Component;
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+    <div className="space-y-6">
       {/* Stepper */}
       <ol className="flex flex-wrap gap-2" aria-label="Steps">
         {STEPS.map((s, i) => (
@@ -417,7 +417,7 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
             {w.preview}
           </button>
           {showPreview && (
-            <div className="mx-auto mt-3 max-h-[70vh] max-w-sm overflow-y-auto rounded-2xl border-4 border-ink">
+            <div inert aria-hidden="true" className="pointer-events-none mx-auto mt-3 max-h-[70vh] max-w-sm overflow-y-auto rounded-2xl border-4 border-ink">
               <Preview event={{ ...preview, id: "preview" }} lang={lang} dict={dict} guest={null} demo showBranding={!features.removeBranding} />
             </div>
           )}
@@ -443,6 +443,6 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
           </button>
         )}
       </div>
-    </form>
+    </div>
   );
 }
