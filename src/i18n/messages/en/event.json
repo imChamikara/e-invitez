@@ -1,0 +1,79 @@
+{
+  "dateTbc": "Date to be announced",
+  "invitedTo": "You are warmly invited",
+  "previewBanner": "Preview – this event is not published yet",
+  "dear": "Dear {name} and family,",
+  "expectMany": "we are delighted to expect {count} of you.",
+  "expectOne": "we are delighted to expect you.",
+  "countdown": {
+    "title": "Counting down",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "started": "The celebration has begun!",
+    "ended": "Thank you to everyone who joined us."
+  },
+  "story": "Our story",
+  "timeline": {
+    "title": "Programme",
+    "startsIn": "Starts in {time}",
+    "now": "Happening now",
+    "done": "Completed",
+    "d": "d",
+    "h": "h",
+    "m": "m"
+  },
+  "venue": {
+    "title": "Venue",
+    "openMaps": "Open in Maps",
+    "noMap": "Map link coming soon"
+  },
+  "gallery": { "title": "Gallery", "photo": "Photo {n}" },
+  "rsvp": {
+    "title": "Will you join us?",
+    "intro": "Please let us know so we can plan for you.",
+    "name": "Your name",
+    "attending": "Will you attend?",
+    "yes": "Yes, we will be there",
+    "no": "Sorry, we can't make it",
+    "partySize": "How many people (including you)?",
+    "meal": "Meal preference",
+    "meals": { "any": "No preference", "veg": "Vegetarian", "nonveg": "Non-vegetarian", "none": "No meal needed" },
+    "message": "Message for the family (optional)",
+    "submit": "Send my reply",
+    "sending": "Sending…",
+    "thanksYes": "Thank you! We look forward to seeing you.",
+    "thanksNo": "Thank you for letting us know. You will be missed.",
+    "error": "Sorry, something went wrong. Please try again.",
+    "invalid": "Please check your name and answers.",
+    "closed": "RSVPs are closed for this event.",
+    "demoNote": "Demo only – nothing is saved.",
+    "again": "Reply again"
+  },
+  "wishes": {
+    "title": "Wishes & blessings",
+    "empty": "Be the first to leave a wish.",
+    "name": "Your name",
+    "message": "Your wish",
+    "submit": "Send wish",
+    "sending": "Sending…",
+    "thanks": "Thank you! Your wish has been posted.",
+    "error": "Sorry, we could not post your wish. Please try again.",
+    "demoNote": "Demo only – nothing is saved."
+  },
+  "share": {
+    "title": "Share this invitation",
+    "whatsapp": "Share on WhatsApp",
+    "copy": "Copy link",
+    "copied": "Link copied!",
+    "text": "You are invited to {title}! Details here:"
+  },
+  "gate": {
+    "title": "This invitation is private",
+    "text": "Please enter the password you received from the family.",
+    "password": "Password",
+    "unlock": "Open invitation",
+    "wrong": "That password is not correct."
+  }
+}

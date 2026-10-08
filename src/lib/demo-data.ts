@@ -50,7 +50,7 @@ const base = {
   hasPassword: false,
   rsvpEnabled: true,
   wishesEnabled: true,
-  plan: "free" as const,
+  plan: "standard" as const, // demos show the full theme options
   wishes,
 };
 
