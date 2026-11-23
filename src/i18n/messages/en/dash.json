@@ -3,14 +3,22 @@
   "plans": { "free": "Free", "standard": "Standard", "premium": "Premium" },
   "login": {
     "title": "Sign in",
-    "text": "Enter your email and we will send you a secure sign-in link. No password needed.",
+    "text": "Enter your email and we will send you a secure 6-digit code. No password needed.",
     "email": "Email address",
-    "send": "Send sign-in link",
+    "send": "Send 6-digit code",
     "sending": "Sending…",
-    "sent": "Check your inbox – we sent a sign-in link to {email}.",
+    "sent": "Check your inbox – we sent a 6-digit code to {email}.",
     "google": "Continue with Google",
-    "error": "Sorry, we could not send the link. Please try again.",
-    "setup": "Supabase is not configured yet. Add your keys to .env.local (see README)."
+    "error": "Sorry, we could not send the 6-digit code. Please try again.",
+    "setup": "Supabase is not configured yet. Add your keys to .env.local (see README).",
+    "codeSent": "We sent a 6-digit code to {email}. Enter it below.",
+    "code": "6-digit code",
+    "verify": "Sign in",
+    "verifying": "Checking…",
+    "codeError": "That code is not correct or has expired. Please try again.",
+    "resend": "Send a new code",
+    "changeEmail": "Use a different email",
+    "linkError": "Sorry, the sign-in link did not work. Please request a 6-digit code instead."
   },
   "list": {
     "title": "My events",
