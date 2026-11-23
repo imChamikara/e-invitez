@@ -10,7 +10,8 @@ import { hasSupabase } from "@/lib/supabase/env";
 
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+  const { error } = await searchParams;
   const { lang, dict } = await getI18n();
   const l = dict.dash.login;
   const configured = hasSupabase();
@@ -31,7 +32,11 @@ export default async function LoginPage() {
         <h1 className="mb-2 text-2xl font-bold">{l.title}</h1>
         <p className="mb-5 text-muted">{l.text}</p>
         {configured ? (
-          <LoginForm labels={l} google={process.env.NEXT_PUBLIC_GOOGLE_AUTH === "true"} />
+          <LoginForm
+            labels={l}
+            google={process.env.NEXT_PUBLIC_GOOGLE_AUTH === "true"}
+            initialError={typeof error === "string" && error ? `${l.linkError} (${error})` : undefined}
+          />
         ) : (
           <p className="rounded-xl bg-amber-50 p-4 font-medium text-amber-900">{l.setup}</p>
         )}
