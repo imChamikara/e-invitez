@@ -170,3 +170,30 @@ body {
   color: #1c1917;
   font: inherit;
 }
+
+/* Invalid form fields (set via aria-invalid by the event editor). */
+.field[aria-invalid="true"] {
+  border-color: #b91c1c;
+  background: #fef2f2;
+}
+.field[aria-invalid="true"]:focus,
+.field[aria-invalid="true"]:focus-visible {
+  outline: 3px solid rgb(185 28 28 / 0.45);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgb(185 28 28 / 0.2);
+}
+
+/* Wizard step transitions: short fade + slide, off for reduced-motion users. */
+@keyframes step-in-forward {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes step-in-back {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: none; }
+}
+.step-in-forward { animation: step-in-forward 0.2s ease-out both; }
+.step-in-back { animation: step-in-back 0.2s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .step-in-forward, .step-in-back { animation: none; }
+}

@@ -36,7 +36,21 @@
     "photosTitle": "ඡායාරූප",
     "timelineTitle": "වැඩසටහන සහ නැකත්",
     "publishTitle": "සබැඳිය සහ පළ කිරීම",
-    "preview": "සජීවී පෙරදසුන"
+    "preview": "සජීවී පෙරදසුන",
+    "showPreview": "සජීවී පෙරදසුන පෙන්වන්න",
+    "previewButton": "පෙරදසුන",
+    "closePreview": "පෙරදසුන වසන්න",
+    "missingPublish": "පළ කිරීමට පෙර අඩුපාඩු {count}ක්:",
+    "missingDraft": "සුරැකීමට පෙර අඩුපාඩු {count}ක්:",
+    "checklistTitle": "පළ කිරීමට පෙර",
+    "checklistBlocked": "පළ කිරීමට ඉහත සියල්ල සම්පූර්ණ කරන්න.",
+    "stepMissing": "හි අඩුපාඩු ඇත",
+    "stepDone": "සම්පූර්ණයි",
+    "reqTitle": "උත්සවයේ නම",
+    "reqSlug": "වලංගු සහ ලබාගත හැකි සබැඳියක්",
+    "reqDate": "උත්සවයේ දිනය සහ වේලාව",
+    "reqVenue": "ස්ථානයේ නම",
+    "reqSection": "වැඩසටහන් අයිතමය {n}: මාතෘකාව"
   },
   "form": {
     "title": "උත්සවයේ නම / නාම",
