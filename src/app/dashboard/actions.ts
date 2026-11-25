@@ -2,15 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import { siteConfig } from "@/config/site";
 import { requireUser } from "@/lib/auth";
 import { isValidSlug } from "@/lib/event-utils";
 import { featuresFor } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
-import { eventInputSchema, sectionInputSchema } from "@/lib/validation";
+import { saveSchema, type SavePayload } from "@/lib/validation";
 
-export type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; error: string };
+export type ActionResult<T = object> =
+  | ({ ok: true } & T)
+  /** `fields` lists the rejected payload paths (e.g. "event.mapsUrl") when validation fails. */
+  | { ok: false; error: string; fields?: string[] };
 
 export async function signOut() {
   const supabase = await createClient();
@@ -29,21 +31,15 @@ export async function checkSlug(slug: string, currentId?: string): Promise<boole
   return data === true;
 }
 
-const saveSchema = z.object({
-  event: eventInputSchema,
-  sections: z.array(sectionInputSchema).max(40),
-  photos: z.array(z.url()).max(80),
-  coverImageUrl: z.url().nullable(),
-  password: z.string().max(100).optional(),
-  publish: z.boolean(),
-});
-export type SavePayload = z.input<typeof saveSchema>;
-
 /** Creates (id = null) or updates an event together with its sections and photos. */
 export async function saveEvent(id: string | null, payload: SavePayload): Promise<ActionResult<{ id: string; slug: string }>> {
   const { supabase, user, plan } = await requireUser();
   const parsed = saveSchema.safeParse(payload);
-  if (!parsed.success) return { ok: false, error: "invalid" };
+  if (!parsed.success) {
+    console.error("saveEvent: invalid payload", parsed.error.issues);
+    const fields = [...new Set(parsed.error.issues.map((issue) => issue.path.join(".")))];
+    return { ok: false, error: "invalid", fields };
+  }
   const { event: e, sections, photos, coverImageUrl, password, publish } = parsed.data;
   const features = featuresFor(plan);
 

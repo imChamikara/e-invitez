@@ -60,7 +60,9 @@
     "reqSlug": "A valid, available link",
     "reqDate": "Event date and time",
     "reqVenue": "Venue name",
-    "reqSection": "Programme item {n}: title"
+    "reqSection": "Programme item {n}: title",
+    "needFixing": "{count} to fix:",
+    "itemLabel": "Programme item {n}"
   },
   "form": {
     "title": "Event title / names",
@@ -102,7 +104,11 @@
       "slug_taken": "That link is already taken.",
       "limit_sections": "Your plan allows fewer programme items.",
       "limit_photos": "Your plan allows fewer photos.",
-      "failed": "Something went wrong. Please try again."
+      "failed": "Something went wrong. Please try again.",
+      "maps": "Paste the full Google Maps link, starting with https://",
+      "tooLong": "Too long: use at most {max} characters.",
+      "rejected": "This was not accepted. Please check it.",
+      "unknownField": "Could not save. Please check this field: {field}"
     },
     "photos": "Photos",
     "photosHint": "Photos are compressed on your phone before upload to save data.",

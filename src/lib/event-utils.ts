@@ -50,6 +50,21 @@ export function slugify(input: string): string {
     .slice(0, 60);
 }
 
+/** A Google Maps link pasted without "https://". */
+const BARE_MAPS_LINK = /(?:^|\s)((?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.(?:com|lk)\/maps|maps\.google\.(?:com|lk))(?![\w.-])\S*)/i;
+
+/**
+ * Cleans what people paste into the Maps field: share text such as "Venue Name https://maps…"
+ * becomes just the link, and a bare Maps domain gets "https://". Anything else is returned unchanged.
+ */
+export function normaliseMapsUrl(input: string): string {
+  const text = input.trim();
+  const full = text.match(/https?:\/\/[^\s<>"]+/i)?.[0];
+  if (full) return full.replace(/[.,;!?]+$/, "");
+  const bare = text.match(BARE_MAPS_LINK)?.[1];
+  return bare ? `https://${bare.replace(/[.,;!?]+$/, "")}` : text;
+}
+
 /** Only allow http(s) links in href attributes. */
 export function safeUrl(url: string): string | null {
   try {

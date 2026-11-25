@@ -1,7 +1,8 @@
 import { LANG_CODES, type Lang } from "@/config/site";
+import { normaliseMapsUrl } from "@/lib/event-utils";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
-import type { SavePayload } from "@/app/dashboard/actions";
 import type { EventData, EventText, FontPair, OccasionType } from "@/lib/types";
+import type { SavePayload } from "@/lib/validation";
 
 /** Flat, string-based shape the form edits (dates as datetime-local strings, etc.). */
 export interface SectionValues {
@@ -126,7 +127,7 @@ export function valuesToPayload(v: EditorValues): SavePayload {
       eventDate: fromLocalInput(v.eventDate),
       venueName: v.venueName,
       venueAddress: v.venueAddress,
-      mapsUrl: v.mapsUrl.trim(),
+      mapsUrl: normaliseMapsUrl(v.mapsUrl),
       story: v.story,
       theme: { ...(v.accent ? { accent: v.accent } : {}), fontPair: v.fontPair },
       translations,

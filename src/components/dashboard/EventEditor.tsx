@@ -6,53 +6,29 @@ import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { checkSlug, saveEvent } from "@/app/dashboard/actions";
 import { LANG_CODES, siteConfig, type Lang, type PlanKey } from "@/config/site";
 import { format, type Dict } from "@/i18n";
-import { slugify } from "@/lib/event-utils";
+import { isValidSlug, normaliseMapsUrl, slugify } from "@/lib/event-utils";
 import { compressImage } from "@/lib/image";
+import { TEXT_LIMITS, textLength } from "@/lib/limits";
 import { featuresFor } from "@/lib/plans";
 import { storage } from "@/lib/storage";
 import { DEMO_EVENTS } from "@/lib/demo-data";
 import { FONT_PAIRS, OCCASION_TYPES } from "@/lib/types";
 import { TEMPLATES, getTemplate } from "@/templates/registry";
 import { defaultValues, valuesToPayload, valuesToPreview, type EditorValues } from "./editor-types";
+import {
+  describeField,
+  editorFieldFor,
+  getRequirements,
+  STEPS,
+  valueAt,
+  type EditorField,
+  type FieldTarget,
+  type SlugState,
+  type Step,
+} from "./editor-validation";
 
-const STEPS = ["occasion", "template", "details", "photos", "timeline", "publish"] as const;
-type Step = (typeof STEPS)[number];
-type SlugState = "idle" | "checking" | "ok" | "bad";
-
-const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const PREVIEW_KEY = "editor-live-preview";
 const DESKTOP_QUERY = "(min-width: 1024px)";
-
-/** One required field: which step it lives on and which DOM id to focus. */
-type ReqField = "title" | "slug" | "eventDate" | "venueName" | `sections.${number}.title`;
-interface Requirement {
-  field: ReqField;
-  step: Step;
-  label: string;
-  elementId: string;
-  ok: boolean;
-  /** Only needed to publish; a draft can be saved without it. */
-  publishOnly: boolean;
-}
-
-/** The single list of required fields (draft: title + slug; publish: also date, venue, programme titles). */
-function getRequirements(v: EditorValues, slugState: SlugState, w: Dict["dash"]["wizard"]): Requirement[] {
-  const slugOk = v.slug.length >= 3 && v.slug.length <= 60 && SLUG_RE.test(v.slug) && slugState !== "bad";
-  return [
-    { field: "title", step: "details", label: w.reqTitle, elementId: "f-title", ok: v.title.trim() !== "", publishOnly: false },
-    { field: "slug", step: "publish", label: w.reqSlug, elementId: "f-slug", ok: slugOk, publishOnly: false },
-    { field: "eventDate", step: "details", label: w.reqDate, elementId: "f-date", ok: v.eventDate.trim() !== "", publishOnly: true },
-    { field: "venueName", step: "details", label: w.reqVenue, elementId: "f-venue", ok: v.venueName.trim() !== "", publishOnly: true },
-    ...v.sections.map((s, i): Requirement => ({
-      field: `sections.${i}.title`,
-      step: "timeline",
-      label: format(w.reqSection, { n: i + 1 }),
-      elementId: `f-sec-${i}`,
-      ok: s.title.trim() !== "",
-      publishOnly: true,
-    })),
-  ];
-}
 
 function subscribeDesktop(onChange: () => void) {
   const mq = window.matchMedia(DESKTOP_QUERY);
@@ -95,6 +71,18 @@ function writePref(on: boolean) {
 const scrollBehavior = (): ScrollBehavior =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
+/** Character count against the server limit (trimmed, as the server counts it). */
+function Counter({ value, max }: { value: string; max: number }) {
+  const n = textLength(value.trim());
+  return <p className={`mt-1 text-right text-sm ${n > max ? "font-semibold text-red-800" : "text-muted"}`}>{n}/{max}</p>;
+}
+
+/** A field the server rejected; it stays flagged until its value changes. */
+interface ServerIssue extends FieldTarget {
+  snapshot: string;
+  message: string;
+}
+
 /** The preview is for looking only: swallow clicks and submits so nothing inside it does anything. */
 const blockEvent = (e: React.SyntheticEvent) => {
   e.preventDefault();
@@ -135,8 +123,10 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
   const [summaryTick, setSummaryTick] = useState(0);
   const [navTick, setNavTick] = useState(0);
   const [mobilePreview, setMobilePreview] = useState(false);
+  const [serverIssues, setServerIssues] = useState<ServerIssue[]>([]);
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const translationsRef = useRef<HTMLDetailsElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
@@ -149,10 +139,23 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
   const v = useWatch({ control }) as EditorValues;
   const stepIndex = STEPS.indexOf(step);
 
-  const requirements = getRequirements(v, slugState, w);
+  const requirements = getRequirements(v, slugState, dict);
   const publishReady = requirements.every((r) => r.ok);
-  const missing = attempt ? requirements.filter((r) => !r.ok && (attempt === "publish" || !r.publishOnly)) : [];
-  const stepsWithMissing = new Set(missing.map((r) => r.step));
+  const activeServerIssues = serverIssues.filter((i) => valueAt(v, i.field) === i.snapshot);
+  /** Failing browser checks for the mode last attempted, plus anything the server rejected. */
+  const failing = attempt ? requirements.filter((r) => !r.ok && (attempt === "publish" || !r.publishOnly)) : [];
+  const problems = [
+    ...failing,
+    ...activeServerIssues
+      .filter((i) => !failing.some((r) => r.field === i.field))
+      .map((i) => ({ ...i, kind: "server" as const })),
+  ];
+  const stepsWithProblems = new Set(problems.map((r) => r.step));
+  // Length limits are flagged while typing; "required" and the Maps link only after a save attempt.
+  const live = requirements.filter((r) => r.kind === "invalid" && r.field !== "mapsUrl");
+  const flagged = [...problems, ...live.filter((r) => !problems.some((p) => p.field === r.field))];
+  const flaggedKey = JSON.stringify(flagged.map((r) => [r.field, r.kind === "server" ? "server" : r.kind, r.message]));
+  const sectionCount = v.sections.length;
 
   // Suggest a slug from the title until the owner edits it themselves.
   useEffect(() => {
@@ -174,12 +177,20 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
     return () => clearTimeout(timer);
   }, [v.slug, eventId]);
 
-  // Clear a field's error as soon as it becomes valid (react-hook-form only does this after a submit).
+  // Mirror the flagged fields into react-hook-form so inputs get aria-invalid and their message.
   useEffect(() => {
-    for (const r of requirements) {
-      if (r.ok && getFieldState(r.field).error) clearErrors(r.field);
+    clearErrors();
+    // Reversed so that when a field fails twice, the first message wins.
+    for (const [field, type, message] of (JSON.parse(flaggedKey) as [EditorField, string, string][]).reverse()) {
+      setError(field, { type, message });
     }
-  });
+  }, [flaggedKey, sectionCount, setError, clearErrors]);
+
+  // Open the "other languages" panel when something inside it is wrong.
+  const translationFlagged = flagged.some((r) => r.field.startsWith("tr."));
+  useEffect(() => {
+    if (translationFlagged && translationsRef.current) translationsRef.current.open = true;
+  }, [translationFlagged, step]);
 
   // After navigating: scroll to the top of the editor and focus the new heading, or focus a specific field.
   useEffect(() => {
@@ -189,6 +200,8 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
     const behavior = scrollBehavior();
     if (p.focusId) {
       const el = document.getElementById(p.focusId);
+      const panel = el?.closest("details");
+      if (panel) panel.open = true;
       el?.scrollIntoView({ behavior, block: "center" });
       el?.focus({ preventScroll: true });
     } else {
@@ -263,14 +276,26 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
     if (getValues("coverImageUrl") === url) setValue("coverImageUrl", null);
   }
 
+  function removeSection(index: number) {
+    // Item numbers shift, so earlier server messages about programme items no longer line up.
+    setServerIssues((prev) => prev.filter((i) => !i.field.startsWith("sections")));
+    sections.remove(index);
+  }
+
+  function cleanMapsUrl() {
+    const current = getValues("mapsUrl");
+    const cleaned = normaliseMapsUrl(current);
+    if (cleaned !== current) setValue("mapsUrl", cleaned, { shouldDirty: true });
+  }
+
   async function save(publish: boolean) {
     setValue("publish", publish);
     setMessage(null);
+    setServerIssues([]);
+    cleanMapsUrl();
     const mode = publish ? "publish" : "draft";
-    const problems = requirements.filter((r) => !r.ok && (publish || !r.publishOnly));
-    if (problems.length) {
+    if (requirements.some((r) => !r.ok && (publish || !r.publishOnly))) {
       setAttempt(mode);
-      for (const r of problems) setError(r.field, { type: "required" });
       setSummaryTick((t) => t + 1);
       return;
     }
@@ -279,7 +304,8 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
     const result = await saveEvent(eventId ?? null, valuesToPayload(getValues()));
     setSaving(false);
     if (!result.ok) {
-      const errors = f.errors as Record<string, string>;
+      if (result.fields?.length) return showRejected(result.fields, mode);
+      const errors = f.errors as unknown as Record<string, string>;
       setMessage({ kind: "error", text: errors[result.error] ?? f.errors.failed });
       return;
     }
@@ -288,6 +314,31 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
       router.refresh();
     } else {
       router.push(`/dashboard/${result.id}`);
+    }
+  }
+
+  /** Flags the fields the server rejected; paths we can't place are named in a message. */
+  function showRejected(paths: string[], mode: "draft" | "publish") {
+    const values = getValues();
+    const issues = new Map<EditorField, ServerIssue>();
+    const unknown: string[] = [];
+    for (const path of paths) {
+      const field = editorFieldFor(path);
+      if (!field) {
+        unknown.push(path);
+        continue;
+      }
+      issues.set(field, {
+        ...describeField(field, dict),
+        snapshot: valueAt(values, field),
+        message: field === "mapsUrl" ? f.errors.maps : f.errors.rejected,
+      });
+    }
+    if (unknown.length) setMessage({ kind: "error", text: format(f.errors.unknownField, { field: unknown.join(", ") }) });
+    if (issues.size) {
+      setAttempt(mode);
+      setServerIssues([...issues.values()]);
+      setSummaryTick((t) => t + 1);
     }
   }
 
@@ -304,8 +355,7 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
     timeline: w.timelineTitle,
     publish: w.publishTitle,
   };
-  const errors = formState.errors;
-  const slugFormatBad = v.slug !== "" && !(v.slug.length >= 3 && v.slug.length <= 60 && SLUG_RE.test(v.slug));
+  const slugFormatBad = v.slug !== "" && !isValidSlug(v.slug);
   const wide = isDesktop && previewOn;
 
   const previewNode = preview ? (
@@ -319,7 +369,12 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
     </div>
   ) : null;
 
-  const requiredMsg = <p role="alert" className="mt-1 text-red-800">{f.required}</p>;
+  /** aria-invalid and the inline message for one field. */
+  const invalidProps = (name: EditorField) => ({ "aria-invalid": Boolean(getFieldState(name, formState).error) });
+  const errorFor = (name: EditorField) => {
+    const error = getFieldState(name, formState).error;
+    return error?.message ? <p role="alert" className="mt-1 text-red-800">{error.message}</p> : null;
+  };
 
   return (
     <div className={wide ? "relative left-1/2 w-[min(72rem,calc(100vw-3rem))] -translate-x-1/2" : ""}>
@@ -346,8 +401,8 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
             <ol ref={stepperRef} className="flex gap-2 overflow-x-auto pb-1">
               {STEPS.map((s, i) => {
                 const current = s === step;
-                const done = visited.has(s) && !current && !requirements.some((r) => r.step === s && !r.ok);
-                const flagged = stepsWithMissing.has(s);
+                const done = visited.has(s) && !current && !stepsWithProblems.has(s) && !requirements.some((r) => r.step === s && !r.ok);
+                const hasProblem = stepsWithProblems.has(s);
                 return (
                   <li key={s} className="shrink-0">
                     <button
@@ -361,7 +416,7 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
                       <span aria-hidden="true">{done ? "✓" : i + 1}.&nbsp;</span>
                       {dict.dash.steps[s]}
                       {done && <span className="sr-only"> ({w.stepDone})</span>}
-                      {flagged && (
+                      {hasProblem && (
                         <>
                           <span aria-hidden="true" className="ml-2 inline-block h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-white" />
                           <span className="sr-only"> ({w.stepMissing})</span>
@@ -374,17 +429,21 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
             </ol>
           </nav>
 
-          {missing.length > 0 && (
+          {problems.length > 0 && (
             <div ref={summaryRef} tabIndex={-1} role="alert" className="rounded-xl border-2 border-red-300 bg-red-50 p-4 outline-none">
               <p className="font-bold text-red-900">
-                {format(attempt === "publish" ? w.missingPublish : w.missingDraft, { count: missing.length })}
+                {format(
+                  problems.some((r) => r.kind !== "required") ? w.needFixing : attempt === "publish" ? w.missingPublish : w.missingDraft,
+                  { count: problems.length },
+                )}
               </p>
               <ul className="mt-2 space-y-1">
-                {missing.map((r) => (
-                  <li key={r.field}>
+                {problems.map((r) => (
+                  <li key={`${r.field}-${r.kind}`}>
                     <button type="button" className="tap text-left font-semibold text-red-900 underline" onClick={() => goTo(r.step, r.elementId)}>
                       {r.label}
                       <span className="font-normal no-underline"> · {dict.dash.steps[r.step]}</span>
+                      {r.kind !== "required" && <span className="block font-normal">{r.message}</span>}
                     </button>
                   </li>
                 ))}
@@ -402,6 +461,7 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
                     <label key={o} className={`tap flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 text-lg ${v.occasionType === o ? "border-brand bg-brand-soft" : "border-line bg-white"}`}>
                       <input
                         type="radio"
+                        id={v.occasionType === o ? "f-occasion" : undefined}
                         value={o}
                         checked={v.occasionType === o}
                         onChange={() => {
@@ -431,6 +491,7 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
                       <label key={t.key} className={`flex cursor-pointer gap-3 rounded-xl border-2 p-4 ${v.templateKey === t.key ? "border-brand bg-brand-soft" : "border-line bg-white"}`}>
                         <input
                           type="radio"
+                          id={v.templateKey === t.key ? "f-template" : undefined}
                           checked={v.templateKey === t.key}
                           onChange={() => {
                             setValue("templateKey", t.key);
@@ -457,52 +518,69 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
               <div className="space-y-5">
                 <div>
                   <label htmlFor="f-title" className="mb-1 block font-semibold">{f.title}</label>
-                  <input id="f-title" className="field" placeholder={f.titleHint} aria-invalid={Boolean(errors.title)} {...register("title", { maxLength: 160 })} />
-                  {errors.title && requiredMsg}
+                  <input id="f-title" className="field" placeholder={f.titleHint} {...invalidProps("title")} {...register("title")} />
+                  {errorFor("title")}
                 </div>
                 <div>
                   <label htmlFor="f-date" className="mb-1 block font-semibold">{f.date}</label>
-                  <input id="f-date" type="datetime-local" className="field" aria-invalid={Boolean(errors.eventDate)} {...register("eventDate")} />
-                  {errors.eventDate && requiredMsg}
+                  <input id="f-date" type="datetime-local" className="field" {...invalidProps("eventDate")} {...register("eventDate")} />
+                  {errorFor("eventDate")}
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
                     <label htmlFor="f-venue" className="mb-1 block font-semibold">{f.venueName}</label>
-                    <input id="f-venue" className="field" aria-invalid={Boolean(errors.venueName)} {...register("venueName")} />
-                    {errors.venueName && requiredMsg}
+                    <input id="f-venue" className="field" {...invalidProps("venueName")} {...register("venueName")} />
+                    {errorFor("venueName")}
                   </div>
                   <div>
                     <label htmlFor="f-addr" className="mb-1 block font-semibold">{f.venueAddress}</label>
-                    <input id="f-addr" className="field" {...register("venueAddress")} />
+                    <input id="f-addr" className="field" {...invalidProps("venueAddress")} {...register("venueAddress")} />
+                    {errorFor("venueAddress")}
                   </div>
                 </div>
                 <div>
                   <label htmlFor="f-maps" className="mb-1 block font-semibold">{f.mapsUrl}</label>
-                  <input id="f-maps" type="url" inputMode="url" className="field" placeholder="https://maps.app.goo.gl/…" {...register("mapsUrl")} />
+                  <input id="f-maps" type="url" inputMode="url" className="field" placeholder="https://maps.app.goo.gl/…" {...invalidProps("mapsUrl")} {...register("mapsUrl", { onBlur: cleanMapsUrl })} />
+                  {errorFor("mapsUrl")}
                   <p className="mt-1 text-sm text-muted">{f.mapsHint}</p>
                 </div>
                 <div>
                   <label htmlFor="f-story" className="mb-1 block font-semibold">{f.story}</label>
-                  <textarea id="f-story" rows={5} className="field" {...register("story", { maxLength: 4000 })} />
+                  <textarea id="f-story" rows={5} className="field" {...invalidProps("story")} {...register("story")} />
+                  <Counter value={v.story} max={TEXT_LIMITS.story} />
+                  {errorFor("story")}
                 </div>
                 <div>
                   <label htmlFor="f-lang" className="mb-1 block font-semibold">{f.languageDefault}</label>
-                  <select id="f-lang" className="field" {...register("languageDefault")}>
+                  <select id="f-lang" className="field" {...invalidProps("languageDefault")} {...register("languageDefault")}>
                     {siteConfig.languages.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
                   </select>
                   <p className="mt-1 text-sm text-muted">{f.languageHint}</p>
                 </div>
 
-                <details className="card p-4">
+                <details ref={translationsRef} className="card p-4">
                   <summary className="tap cursor-pointer font-semibold">{f.otherLanguages}</summary>
                   <div className="mt-4 space-y-6">
                     {otherLangs.map((l) => (
                       <fieldset key={l} className="space-y-3" lang={l}>
                         <legend className="font-bold">{siteConfig.languages.find((x) => x.code === l)?.label}</legend>
-                        <input aria-label={f.title} placeholder={f.title} className="field" {...register(`tr.${l}.title`)} />
-                        <textarea aria-label={f.story} placeholder={f.story} rows={3} className="field" {...register(`tr.${l}.story`)} />
-                        <input aria-label={f.venueName} placeholder={f.venueName} className="field" {...register(`tr.${l}.venueName`)} />
-                        <input aria-label={f.venueAddress} placeholder={f.venueAddress} className="field" {...register(`tr.${l}.venueAddress`)} />
+                        <div>
+                          <input id={`f-tr-${l}-title`} aria-label={f.title} placeholder={f.title} className="field" {...invalidProps(`tr.${l}.title`)} {...register(`tr.${l}.title`)} />
+                          {errorFor(`tr.${l}.title`)}
+                        </div>
+                        <div>
+                          <textarea id={`f-tr-${l}-story`} aria-label={f.story} placeholder={f.story} rows={3} className="field" {...invalidProps(`tr.${l}.story`)} {...register(`tr.${l}.story`)} />
+                          <Counter value={v.tr[l].story} max={TEXT_LIMITS.story} />
+                          {errorFor(`tr.${l}.story`)}
+                        </div>
+                        <div>
+                          <input id={`f-tr-${l}-venue`} aria-label={f.venueName} placeholder={f.venueName} className="field" {...invalidProps(`tr.${l}.venueName`)} {...register(`tr.${l}.venueName`)} />
+                          {errorFor(`tr.${l}.venueName`)}
+                        </div>
+                        <div>
+                          <input id={`f-tr-${l}-addr`} aria-label={f.venueAddress} placeholder={f.venueAddress} className="field" {...invalidProps(`tr.${l}.venueAddress`)} {...register(`tr.${l}.venueAddress`)} />
+                          {errorFor(`tr.${l}.venueAddress`)}
+                        </div>
                       </fieldset>
                     ))}
                   </div>
@@ -552,6 +630,7 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
                 <label htmlFor="f-photos" className={`btn-accent cursor-pointer ${uploading || v.photos.length >= features.maxPhotos ? "pointer-events-none opacity-60" : ""}`}>
                   {uploading ? f.uploading : `+ ${f.upload}`}
                 </label>
+                {errorFor("photos")}
                 <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {v.photos.map((url) => {
                     const isCover = (v.coverImageUrl ?? v.photos[0]) === url;
@@ -585,21 +664,32 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
                           aria-label={f.itemTitle}
                           placeholder={f.itemTitle}
                           className="field"
-                          aria-invalid={Boolean(errors.sections?.[i]?.title)}
+                          {...invalidProps(`sections.${i}.title`)}
                           {...register(`sections.${i}.title`)}
                         />
-                        {errors.sections?.[i]?.title && requiredMsg}
+                        {errorFor(`sections.${i}.title`)}
                       </div>
-                      <input aria-label={f.itemTime} type="datetime-local" className="field" {...register(`sections.${i}.startsAt`)} />
-                      <input aria-label={f.itemDesc} placeholder={f.itemDesc} className="field" {...register(`sections.${i}.description`)} />
+                      <div>
+                        <input id={`f-sec-${i}-time`} aria-label={f.itemTime} type="datetime-local" className="field" {...invalidProps(`sections.${i}.startsAt`)} {...register(`sections.${i}.startsAt`)} />
+                        {errorFor(`sections.${i}.startsAt`)}
+                      </div>
+                      <div>
+                        <input id={`f-sec-${i}-desc`} aria-label={f.itemDesc} placeholder={f.itemDesc} className="field" {...invalidProps(`sections.${i}.description`)} {...register(`sections.${i}.description`)} />
+                        <Counter value={v.sections[i]?.description ?? ""} max={TEXT_LIMITS.sectionDescription} />
+                        {errorFor(`sections.${i}.description`)}
+                      </div>
                       {otherLangs.map((l) => (
-                        <input key={l} lang={l} aria-label={`${f.itemTitle} (${l})`} placeholder={`${siteConfig.languages.find((x) => x.code === l)?.label}: ${f.itemTitle}`} className="field" {...register(`sections.${i}.titleTr.${l}`)} />
+                        <div key={l}>
+                          <input id={`f-sec-${i}-tr-${l}`} lang={l} aria-label={`${f.itemTitle} (${l})`} placeholder={`${siteConfig.languages.find((x) => x.code === l)?.label}: ${f.itemTitle}`} className="field" {...invalidProps(`sections.${i}.titleTr.${l}`)} {...register(`sections.${i}.titleTr.${l}`)} />
+                          {errorFor(`sections.${i}.titleTr.${l}`)}
+                        </div>
                       ))}
-                      <button type="button" className="tap text-red-800 underline" onClick={() => sections.remove(i)}>{f.removeItem}</button>
+                      <button type="button" className="tap text-red-800 underline" onClick={() => removeSection(i)}>{f.removeItem}</button>
                     </li>
                   ))}
                 </ul>
                 <button
+                  id="f-sec-add"
                   type="button"
                   className="btn-outline"
                   disabled={sections.fields.length >= features.maxSections}
@@ -621,12 +711,12 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
                       id="f-slug"
                       className="field"
                       autoCapitalize="none"
-                      aria-invalid={Boolean(errors.slug) || slugState === "bad"}
-                      {...register("slug", { maxLength: 60, onChange: () => setSlugTouched(true) })}
+                      aria-invalid={Boolean(getFieldState("slug", formState).error) || slugState === "bad"}
+                      {...register("slug", { onChange: () => setSlugTouched(true) })}
                     />
                   </div>
                   <p className="mt-1 text-sm text-muted">{f.slugHint}</p>
-                  {errors.slug && v.slug === "" && requiredMsg}
+                  {(v.slug === "" || getFieldState("slug", formState).error?.type === "server") && errorFor("slug")}
                   <p aria-live="polite" className={`mt-1 font-semibold ${slugState === "ok" && !slugFormatBad ? "text-green-800" : slugState === "bad" || slugFormatBad ? "text-red-800" : "text-muted"}`}>
                     {slugState === "checking" && !slugFormatBad && f.slugChecking}
                     {slugFormatBad && f.slugInvalid}
@@ -642,7 +732,8 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
 
                 <div>
                   <label htmlFor="f-pw" className="mb-1 block font-semibold">{f.password}</label>
-                  <input id="f-pw" type="text" autoComplete="off" disabled={!features.passwordProtection} className="field" {...register("password")} />
+                  <input id="f-pw" type="text" autoComplete="off" disabled={!features.passwordProtection} className="field" {...invalidProps("password")} {...register("password")} />
+                  {errorFor("password")}
                   <p className="mt-1 text-sm text-muted">{features.passwordProtection ? f.passwordHint : f.passwordLocked}</p>
                   {editing && features.passwordProtection && (
                     <label className="tap mt-1 flex items-center gap-3">
@@ -655,13 +746,14 @@ export function EventEditor({ dict, lang, userId, plan, eventId, initial }: Prop
                 <section aria-labelledby="f-checklist" className="card space-y-2 p-4">
                   <h3 id="f-checklist" className="font-bold">{w.checklistTitle}</h3>
                   <ul className="space-y-1">
-                    {requirements.map((r) => (
-                      <li key={r.field}>
+                    {requirements.filter((r) => r.kind === "required" || !r.ok).map((r) => (
+                      <li key={`${r.field}-${r.kind}`}>
                         {r.ok ? (
                           <span className="font-semibold text-green-800">✓ {r.label}</span>
                         ) : (
                           <button type="button" className="tap text-left font-semibold text-red-800 underline" onClick={() => goTo(r.step, r.elementId)}>
                             ✗ {r.label}
+                            {r.kind === "invalid" && <span className="block font-normal">{r.message}</span>}
                           </button>
                         )}
                       </li>
